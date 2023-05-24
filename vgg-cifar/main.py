@@ -162,17 +162,30 @@ def main():
     optimizer = torch.optim.SGD(model.parameters(), args.lr,
                                 momentum=args.momentum,
                                 weight_decay=args.weight_decay)
-    wandb.init(
-        project='VGG_CIFAR10',
-        entity="miv_yubin", 
-        config={
-            'archi': args.arch,
-            'learning_rate': args.lr,
-            'weight_decay': args.weight_decay,
-            "epochs": args.epochs,
-            "dataset": args.dataset
-        }
-    )
+    if args.dataset == "cifar10" :
+        wandb.init(
+            project='VGG_CIFAR10',
+            entity="miv_yubin", 
+            config={
+                'archi': args.arch,
+                'learning_rate': args.lr,
+                'weight_decay': args.weight_decay,
+                "epochs": args.epochs,
+                "dataset": args.dataset
+            }
+        )
+    elif args.dataset == "cifar100" :
+        wandb.init(
+            project='VGG_CIFAR100',
+            entity="miv_yubin", 
+            config={
+                'archi': args.arch,
+                'learning_rate': args.lr,
+                'weight_decay': args.weight_decay,
+                "epochs": args.epochs,
+                "dataset": args.dataset
+            }
+        )
     wandb.run.name = 'test'
 
     if args.evaluate:
