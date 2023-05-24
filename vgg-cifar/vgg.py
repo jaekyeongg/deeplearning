@@ -175,7 +175,7 @@ cfg = {
             512, 512, 512, 512, 'M'],
     'SE_234': [64, 64, 'M', 128, 128, 'SE', 'M', 256, 256, 256, 256, 'SE', 'M', 512, 512, 512, 512, 'SE', 'M',
             512, 512, 512, 512, 'M'],
-    'SE_456': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'SE', 'M', 512, 512, 512, 512, 'SE', 'M',
+    'SE_345': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'SE', 'M', 512, 512, 512, 512, 'SE', 'M',
             512, 512, 512, 512, 'SE', 'M'],
 
     'SE_12': [64, 64, 'SE', 'M', 128, 128, 'SE', 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M',
@@ -221,6 +221,6 @@ def vgg19(num_classes):
     return VGG(make_layers(cfg['E'],batch_norm=True), num_classes)
 
 
-#def vgg19_bn():
-#    """VGG 19-layer model (configuration 'E') with batch normalization"""
-#    return VGG(make_layers(cfg['SA_12'], batch_norm=True))
+def vgg19_bn():
+   """VGG 19-layer model (configuration 'E') with batch normalization"""
+   return VGG(make_layers(cfg['SE_'], batch_norm=True))
