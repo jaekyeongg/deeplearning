@@ -36,6 +36,8 @@ parser.add_argument('--resume', '-r', action='store_true',
 parser.add_argument('--epochs', default=200, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--dataset', help='dataset', default='cifar10', type=str)
+parser.add_argument('--block', help='block type', default='RESNET', type=str)
+parser.add_argument('--save_dir', default='save_temp', type=str)
 
 args = parser.parse_args()
 
@@ -81,7 +83,7 @@ wandb.init(
         "dataset": args.dataset
     }
 )
-wandb.run.name = 'NEW_1'
+wandb.run.name = args.block
 
 cfg = {
     'RESNET': ['None','None','None','None'],
@@ -104,7 +106,7 @@ cfg = {
 # Model
 print('==> Building model..')
 # net = VGG('VGG19')
-net = ResNet18(cfg=cfg['NEW_1'])
+net = ResNet18(cfg=cfg[args.block])
 # net = PreActResNet18()
 # net = GoogLeNet()
 # net = DenseNet121()
@@ -199,9 +201,10 @@ def test(epoch):
             'acc': acc,
             'epoch': epoch,
         }
-        if not os.path.isdir('checkpoint'):
-            os.mkdir('checkpoint')
-        torch.save(state, './checkpoint/ckpt.pth')
+        save_path = os.path.join(args.save_dir, args.block)
+        if not os.path.isdir(save_path):
+            os.mkdir(save_path)
+        torch.save(state, os.path.join(save_path, 'checkpoint_{}.pth'.format(epoch)))
         best_acc = acc
 
 
