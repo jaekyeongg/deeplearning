@@ -101,6 +101,8 @@ cfg = {
     'AA_12': ['AA','AA', 'None','None'],
     'AA_23': ['None','AA', 'AA','None'],
     'AA_34': ['None','None','AA', 'AA'],
+    'SE_SA_1': ['SE_SA','None','None', 'None'],
+    'CBAM_1': ['CBAM','None','None', 'None'],
 }
 
 # Model
@@ -202,8 +204,8 @@ def test(epoch):
             'epoch': epoch,
         }
         save_path = os.path.join(args.save_dir, args.block)
-        if not os.path.isdir(save_path):
-            os.mkdir(save_path)
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
         torch.save(state, os.path.join(save_path, 'checkpoint_{}.pth'.format(epoch)))
         best_acc = acc
 
