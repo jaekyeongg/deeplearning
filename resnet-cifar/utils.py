@@ -10,7 +10,7 @@ import math
 
 import torch.nn as nn
 import torch.nn.init as init
-
+import torch
 
 def get_mean_and_std(dataset):
     '''Compute the mean and std value of dataset.'''
@@ -42,7 +42,8 @@ def init_params(net):
                 init.constant(m.bias, 0)
 
 
-_, term_width = os.popen('stty size', 'r').read().split()
+#  _, term_width = os.popen('stty size', 'r').read().split()
+term_width = 80  # set the term_width to 80 directly
 term_width = int(term_width)
 
 TOTAL_BAR_LENGTH = 65.

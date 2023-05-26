@@ -33,7 +33,7 @@ model_names = sorted(name for name in vgg.__dict__
 
 
 parser = argparse.ArgumentParser(description='PyTorch VGG Trainer')
-parser.add_argument('-a', '--arch', metavar='ARCH', default='vgg19',
+parser.add_argument('-a', '--arch', metavar='ARCH', default='vgg19_bn',
                     choices=model_names,
                     help='model architecture: ' + ' | '.join(model_names) +
                     ' (default: vgg19)')
@@ -112,7 +112,7 @@ def main():
 
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
-    if args.dataset == "cifar10" :
+    if args.dataset == "cifar10":
         train_loader = torch.utils.data.DataLoader(
             datasets.CIFAR10(root='./data', train=True, transform=transforms.Compose([
             transforms.RandomHorizontalFlip(),
