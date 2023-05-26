@@ -354,9 +354,9 @@ def vgg16_bn():
     return VGG(make_layers(cfg['D'], batch_norm=True))
 
 
-def vgg19(num_classes):
+def vgg19(num_classes, block_type):
     """VGG 19-layer model (configuration "E")"""
-    return VGG(make_layers(cfg['AA_123'],batch_norm=True), num_classes)
+    return VGG(make_layers(cfg[block_type],batch_norm=True), num_classes)
 
 
 #def vgg19_bn():

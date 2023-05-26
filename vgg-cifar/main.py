@@ -68,7 +68,7 @@ parser.add_argument('--save-dir', dest='save_dir',
                     help='The directory used to save the trained models',
                     default='save_temp', type=str)
 parser.add_argument('--dataset', help='dataset', default='cifar10', type=str)
-
+parser.add_argument('--block', help='block_type', default='E', type=str)
 
 best_prec1 = 0
 
@@ -84,10 +84,11 @@ def main():
     print("num classes : ", num_classes)
 
     # Check the save_dir exists or not
-    if not os.path.exists(args.save_dir):
-        os.makedirs(args.save_dir)
+    save_path = os.path.join(args.save_dir, args.dataset, args.block)
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
 
-    model = vgg.__dict__[args.arch](num_classes)
+    model = vgg.__dict__[args.arch](num_classes, args.block)
 
     model.features = torch.nn.DataParallel(model.features)
     if args.cpu:
@@ -188,7 +189,7 @@ def main():
                 "dataset": args.dataset
             }
         )
-    wandb.run.name = 'test'
+    wandb.run.name = args.block
 
     if args.evaluate:
         validate(val_loader, model, criterion)
@@ -210,7 +211,7 @@ def main():
             'epoch': epoch + 1,
             'state_dict': model.state_dict(),
             'best_prec1': best_prec1,
-        }, is_best, filename=os.path.join(args.save_dir, 'checkpoint_{}.tar'.format(epoch)))
+        }, is_best, filename=os.path.join(save_path, 'checkpoint_{}.tar'.format(epoch)))
 
 
 def train(train_loader, model, criterion, optimizer, epoch):
