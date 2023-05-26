@@ -1,6 +1,5 @@
 import argparse
 import os
-import shutil
 import time
 
 import torch
@@ -33,7 +32,7 @@ model_names = sorted(name for name in vgg.__dict__
                      and callable(vgg.__dict__[name]))
 
 
-parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
+parser = argparse.ArgumentParser(description='PyTorch VGG Trainer')
 parser.add_argument('--arch', '-a', metavar='ARCH', default='vgg19',
                     choices=model_names,
                     help='model architecture: ' + ' | '.join(model_names) +
