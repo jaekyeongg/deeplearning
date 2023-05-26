@@ -85,7 +85,7 @@ def main(args):
     #############################################
     # Load model
     #############################################
-    model = vgg.__dict__[args.arch](num_classes)
+    model = vgg.__dict__[args.arch](num_classes, args.block)
     model.features = torch.nn.DataParallel(model.features)
     if args.cpu:
         model.cpu()
@@ -106,19 +106,20 @@ def main(args):
     #print("npimg shape : ", npimg.shape)
     torchvision.utils.save_image(images, "./input.png", nrow=4, normalize = True, range=(-1,1))
     print("input gt labels : ")
-    print(' '.join(f'{classes[labels[j]]:5s}' for j in range(args.batch_size)))
+    np_labels = labels.detach().cpu()
+    print([classes[int(np_labels[j])] for j in range(args.batch_size)])
     output = model(images)
     maxk = 1
     pred = output.topk(maxk, 1, True, True)
-    print("pred : ", pred)
+    # print("pred : ", pred)
     print("pred labels : ")
-    for i in range(args.batch_size):
-        print(classes[pred.indices[i]])
+    np_indices = pred.indices.detach().cpu()
+    print([classes[int(np_indices[j][0])] for j in range(args.batch_size)])
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='PyTorch VGG Evaluation')
-    parser.add_argument('--arch', '-a', metavar='ARCH', default='vgg19',
+    parser.add_argument('-a', '--arch', metavar='ARCH', default='vgg19',
                         choices=model_names,
                         help='model architecture: ' + ' | '.join(model_names) +
                              ' (default: vgg19)')
@@ -131,5 +132,6 @@ if __name__ == '__main__':
                         help='The directory used to save the trained models',
                         default='./save_temp/checkpoint_0.tar', type=str)
     parser.add_argument('--dataset', help='choose one of dataset : cifar10 or cifar100', default='cifar10', type=str)
+    parser.add_argument('--block', help='block_type', default='E', type=str)
 
     main(parser.parse_args())

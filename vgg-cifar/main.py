@@ -33,7 +33,7 @@ model_names = sorted(name for name in vgg.__dict__
 
 
 parser = argparse.ArgumentParser(description='PyTorch VGG Trainer')
-parser.add_argument('--arch', '-a', metavar='ARCH', default='vgg19',
+parser.add_argument('-a', '--arch', metavar='ARCH', default='vgg19',
                     choices=model_names,
                     help='model architecture: ' + ' | '.join(model_names) +
                     ' (default: vgg19)')
@@ -66,7 +66,7 @@ parser.add_argument('--cpu', dest='cpu', action='store_true',
 parser.add_argument('--save-dir', dest='save_dir',
                     help='The directory used to save the trained models',
                     default='save_temp', type=str)
-parser.add_argument('--dataset', help='dataset', default='cifar10', type=str)
+parser.add_argument('--dataset', help='choose one of dataset : cifar10 or cifar100', default='cifar10', type=str)
 parser.add_argument('--block', help='block_type', default='E', type=str)
 
 best_prec1 = 0
