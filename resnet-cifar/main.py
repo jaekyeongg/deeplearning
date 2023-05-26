@@ -71,7 +71,7 @@ classes = ('plane', 'car', 'bird', 'cat', 'deer',
            'dog', 'frog', 'horse', 'ship', 'truck')
 
 wandb.init(
-    project='ResNet_CIFAR10',
+    project='ResNet_CIFAR100',
     entity="miv_yubin", 
     config={
         'archi': 'ResNet18',
@@ -93,6 +93,12 @@ cfg = {
     'NEW_12': ['NEW','NEW', 'None','None'],
     'NEW_123': ['NEW','NEW', 'NEW','None'],
     'NEW_23': ['None','NEW', 'NEW','None'],
+    'SE_12': ['SE','SE', 'None','None'],
+    'SE_23': ['None','SE', 'SE','None'],
+    'SE_34': ['None','None','SE', 'SE'],
+    'AA_12': ['AA','AA', 'None','None'],
+    'AA_23': ['None','AA', 'AA','None'],
+    'AA_34': ['None','None','AA', 'AA'],
 }
 
 # Model
