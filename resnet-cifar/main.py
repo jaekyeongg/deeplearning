@@ -186,16 +186,18 @@ def main(args):
         'SE_12': ['SE', 'SE', 'None', 'None'],
         'SE_23': ['None', 'SE', 'SE', 'None'],
         'SE_34': ['None', 'None', 'SE', 'SE'],
+        'CA_12': ['CA', 'CA', 'None', 'None'],
+        'CA_23': ['None', 'CA', 'CA', 'None'],
+        'CA_34': ['None', 'None', 'CA', 'CA'],
         'SEC_12': ['SEC', 'SEC', 'None', 'None'],
-        'AA_12': ['AA', 'AA', 'None', 'None'],
-        'AA_23': ['None', 'AA', 'AA', 'None'],
-        'AA_34': ['None', 'None', 'AA', 'AA'],
         'SE_SA_1': ['SE_SA', 'None', 'None', 'None'],
         'SE_SA_12': ['SE_SA', 'SE_SA', 'None', 'None'],
+        'SE_SA_123': ['SE_SA', 'SE_SA', 'SE_SA', 'None'],
         'SEC_SA_1': ['SEC_SA', 'None', 'None', 'None'],
         'SEC_SA_12': ['SEC_SA', 'SEC_SA', 'None', 'None'],
         'CBAM_1': ['CBAM', 'None', 'None', 'None'],
         'CBAM_12': ['CBAM', 'CBAM', 'None', 'None'],
+        'CBAM_123': ['CBAM', 'CBAM', 'CBAM', 'None'],
     }
 
     # Model
