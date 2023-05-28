@@ -35,7 +35,6 @@ class BasicBlock(nn.Module):
         elif module == 'SEC': self.image_module = SEBlockCon(self.expansion * planes, 8)
         elif module == 'SA': self.image_module = SpatialGate()
         elif module == 'NEW' : self.image_module = NewBlock(self.expansion*planes, 8)
-        elif module == 'AA': self.image_module = AACN_Layer(in_channels=planes, image_size=image_size)
         elif module == 'SE_SA' : self.image_module = nn.Sequential(
             SEBlock(self.expansion*planes, 8),
             SpatialGate()
@@ -85,12 +84,12 @@ class Bottleneck(nn.Module):
             self.image_module = SEBlock(self.expansion * planes, 8)
         elif module == 'SEC':
             self.image_module = SEBlockCon(self.expansion * planes, 8)
+        elif module == 'CA':
+            self.image_module = ChannelGate(self.expansion * planes)
         elif module == 'SA':
             self.image_module = SpatialGate()
         elif module == 'NEW':
             self.image_module = NewBlock(self.expansion * planes, 8)
-        elif module == 'AA':
-            self.image_module = AACN_Layer(in_channels=planes, image_size=image_size)
         elif module == 'SE_SA':
             self.image_module = nn.Sequential(
                 SEBlock(self.expansion * planes, 8),
