@@ -1,5 +1,5 @@
 import argparse
-
+import cv2
 import torch
 import torch.nn.parallel
 import torch.backends.cudnn as cudnn
@@ -8,7 +8,24 @@ import torch.utils.data
 import torchvision
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
+
 import vgg
+
+from pytorch_grad_cam import GradCAM, \
+    HiResCAM, \
+    ScoreCAM, \
+    GradCAMPlusPlus, \
+    AblationCAM, \
+    XGradCAM, \
+    EigenCAM, \
+    EigenGradCAM, \
+    LayerCAM, \
+    FullGrad, \
+    GradCAMElementWise
+from pytorch_grad_cam import GuidedBackpropReLUModel
+from pytorch_grad_cam.utils.image import show_cam_on_image, \
+    deprocess_image, \
+    preprocess_image
 
 import numpy as np
 import random
@@ -86,6 +103,9 @@ def main(args):
     # Load model
     #############################################
     model = vgg.__dict__[args.arch](num_classes, args.block)
+
+    cam_layers = [model.features[52]]
+
     model.features = torch.nn.DataParallel(model.features)
     if args.cpu:
         model.cpu()
@@ -116,6 +136,46 @@ def main(args):
     np_indices = pred.indices.detach().cpu()
     print([classes[int(np_indices[j][0])] for j in range(args.batch_size)])
 
+    #############################################
+    # Create GradCAM
+    #############################################
+    cam = GradCAM(model=model, target_layers=cam_layers, use_cuda=False if args.cpu else True)
+    gb_model = GuidedBackpropReLUModel(model=model, use_cuda=False if args.cpu else True)
+
+    grayscale_cams = cam(input_tensor=images)
+
+    final_cam = None
+    final_gb = None
+    final_cam_gb = None
+    for idx, grayscale_cam in enumerate(grayscale_cams):
+        tensor_img = images[idx]
+
+        rgb_img = deprocess_image(tensor_img.permute(1, 2, 0).numpy()) / 255.0
+        print(rgb_img)
+        cam_image = show_cam_on_image(rgb_img, grayscale_cam, use_rgb=True)
+
+        # cam_image is RGB encoded whereas "cv2.imwrite" requires BGR encoding.
+        cam_image = cv2.cvtColor(cam_image, cv2.COLOR_RGB2BGR)
+
+        gb = gb_model(tensor_img[None, :], target_category=None)
+
+        cam_mask = cv2.merge([grayscale_cam, grayscale_cam, grayscale_cam])
+        cam_gb = deprocess_image(cam_mask * gb)
+        gb = deprocess_image(gb)
+
+        if final_cam is None:
+            final_cam = cam_image
+            final_gb = gb
+            final_cam_gb = cam_gb
+        else:
+            final_cam = cv2.hconcat([final_cam, cam_image])
+            final_gb = cv2.hconcat([final_gb, gb])
+            final_cam_gb = cv2.hconcat([final_cam_gb, cam_gb])
+
+    cv2.imwrite('gradCAM_cam.jpg', final_cam)
+    cv2.imwrite('gradCAM_gb.jpg', final_gb)
+    cv2.imwrite('gradCAM_cam_gb.jpg', final_cam_gb)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='PyTorch VGG Evaluation')
@@ -132,6 +192,6 @@ if __name__ == '__main__':
                         help='The directory used to save the trained models',
                         default='./save_temp/checkpoint_0.tar', type=str)
     parser.add_argument('--dataset', help='choose one of dataset : cifar10 or cifar100', default='cifar10', type=str)
-    parser.add_argument('--block', help='block_type', default='E', type=str)
+    parser.add_argument('--block', help='block_type', default='VGG19', type=str)
 
     main(parser.parse_args())

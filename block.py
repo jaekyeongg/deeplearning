@@ -182,6 +182,7 @@ class AACN_Layer(nn.Module):
         # Reshape and slice out the padded elements.
         final_x = torch.reshape(flat_x_padded, (batch_size, num_heads, L + 1, 2 * L - 1))
         final_x = final_x[:, :, :L, L - 1:]
+
         return final_x
 
 
