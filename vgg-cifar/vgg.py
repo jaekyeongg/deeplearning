@@ -63,10 +63,13 @@ def make_layers(cfg, batch_norm=True):
         elif 'SEC' == v:
             reduction=8
             layers += [SEBlockCon(in_channels, reduction)]
-        elif v == 'SA':
-            layers += [SpatialGate()]
         elif v=='CA':
             layers += [ChannelGate(in_channels)]
+        elif v == 'SA':
+            layers += [SpatialGate()]
+        elif v == 'AA':
+            img_size = 32 if cnt_pool==0 else 32//(cnt_pool**2)
+            layers += [AACN_Layer(in_channels=in_channels, image_size=img_size)]
         elif v == 'CBAM':
             layers += [CBAM(in_channels,16)]
         elif v == 'NEW' :
@@ -98,7 +101,15 @@ cfg = {
     'SA_23': [64, 64, 'M', 128, 128, 'SA', 'M', 256, 256, 256, 256, 'SA', 'M', 512, 512, 512, 512, 'M',
              512, 512, 512, 512, 'M'],
     'SA_123': [64, 64, 'SA', 'M', 128, 128, 'SA', 'M', 256, 256, 256, 256, 'SA', 'M', 512, 512, 512, 512, 'M',
-             512, 512, 512, 512, 'M'],         
+             512, 512, 512, 512, 'M'],    
+
+    # Attention Augmented Convolutional Network
+    'AA_123': [64, 64, 'AA', 'M', 128, 128, 'AA', 'M', 256, 256, 256, 256, 'AA', 'M', 512, 512, 512, 512, 'M',
+            512, 512, 512, 512, 'M'],
+    'AA_234': [64, 64, 'M', 128, 128, 'AA', 'M', 256, 256, 256, 256, 'AA', 'M', 512, 512, 512, 512, 'AA', 'M',
+            512, 512, 512, 512, 'M'],
+    'AA_345': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'AA', 'M', 512, 512, 512, 512, 'AA', 'M',
+            512, 512, 512, 512, 'SE', 'M'],   
     
     # channel Attention Module
     'CA_123': [64, 64, 'CA', 'M', 128, 128, 'CA', 'M', 256, 256, 256, 256, 'CA', 'M', 512, 512, 512, 512, 'M',
