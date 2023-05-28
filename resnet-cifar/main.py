@@ -173,53 +173,9 @@ def main(args):
         )
         wandb.run.name = args.block
 
-    cfg = {
-        'RESNET': ['None', 'None', 'None', 'None'],
-        'SA_123': ['SA', 'SA', 'SA', 'None'],
-        'SA_1': ['SA', 'None', 'None', 'None'],
-        'SA_12': ['SA', 'SA', 'None', 'None'],
-        'SA_23': ['None', 'SA', 'SA', 'None'],
-
-        'AA_123': ['AA', 'AA', 'AA', 'None'],
-        'AA_1': ['AA', 'None', 'None', 'None'],
-        'AA_12': ['AA', 'AA', 'None', 'None'],
-        'AA_23': ['None', 'AA', 'AA', 'None'],
-
-
-
-        'NEW_1': ['NEW', 'None', 'None', 'None'],
-        'NEW_12': ['NEW', 'NEW', 'None', 'None'],
-        'NEW_123': ['NEW', 'NEW', 'NEW', 'None'],
-        'NEW_23': ['None', 'NEW', 'NEW', 'None'],
-
-        'SE_12': ['SE', 'SE', 'None', 'None'],
-        'SE_23': ['None', 'SE', 'SE', 'None'],
-        'SE_34': ['None', 'None', 'SE', 'SE'],
-
-        'CA_12': ['CA', 'CA', 'None', 'None'],
-        'CA_23': ['None', 'CA', 'CA', 'None'],
-        'CA_34': ['None', 'None', 'CA', 'CA'],
-
-        'SEC_12': ['SEC', 'SEC', 'None', 'None'],
-        'SEC_23': ['None', 'SEC', 'SEC', 'None'],
-        'SEC_34': ['None', 'None', 'SEC', 'SEC'],
-
-        'SE_SA_1': ['SE_SA', 'None', 'None', 'None'],
-        'SE_SA_12': ['SE_SA', 'SE_SA', 'None', 'None'],
-        'SE_SA_123': ['SE_SA', 'SE_SA', 'SE_SA', 'None'],
-
-        'SEC_SA_1': ['SEC_SA', 'None', 'None', 'None'],
-        'SEC_SA_12': ['SEC_SA', 'SEC_SA', 'None', 'None'],
-        'SEC_SA_123': ['SEC_SA', 'SEC_SA', 'SEC_SA', 'None'],
-
-        'CBAM_1': ['CBAM', 'None', 'None', 'None'],
-        'CBAM_12': ['CBAM', 'CBAM', 'None', 'None'],
-        'CBAM_123': ['CBAM', 'CBAM', 'CBAM', 'None'],
-    }
-
     # Model
     print('==> Building model..')
-    net = ResNet18(cfg=cfg[args.block], num_classes=100 if args.dataset == 'cifar100' else 10)
+    net = ResNet18(block=args.block, num_classes=100 if args.dataset == 'cifar100' else 10)
 
     # net = VGG('VGG19')
     # net = PreActResNet18()

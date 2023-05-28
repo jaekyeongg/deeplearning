@@ -9,7 +9,8 @@ import torchvision
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 
-import vgg
+from models import *
+from resnet import *
 
 from pytorch_grad_cam import GradCAM, HiResCAM, ScoreCAM, GradCAMPlusPlus, AblationCAM, XGradCAM, EigenCAM, \
     EigenGradCAM, LayerCAM, FullGrad, GradCAMElementWise
@@ -29,10 +30,7 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 ##########################################################
 
-model_names = sorted(name for name in vgg.__dict__
-    if name.islower() and not name.startswith("__")
-                     and name.startswith("vgg")
-                     and callable(vgg.__dict__[name]))
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 # Label and its index for CIFAR10
 # https://www.cs.toronto.edu/~kriz/cifar.html
@@ -62,8 +60,8 @@ def main(args):
     #############################################
     # Load dataset
     #############################################
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    if args.dataset == "cifar100" :
+    normalize = transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010])
+    if args.dataset == "cifar100":
         num_classes = 100
         classes = class_cifar100
         val_loader = torch.utils.data.DataLoader(
@@ -91,17 +89,17 @@ def main(args):
     #############################################
     # Load model
     #############################################
-    model = vgg.__dict__[args.arch](num_classes, args.block)
+    model = ResNet18(block=args.block, num_classes=100 if args.dataset == 'cifar100' else 10)
+    # print(model.layer4)
 
-    cam_layers = [model.features[52]]
+    cam_layers = [model.layer4]
 
-    model.features = torch.nn.DataParallel(model.features)
-    if args.cpu:
-        model.cpu()
-    else:
-        model.cuda()
+    model = model.to(device)
+    if device == 'cuda':
+        model = torch.nn.DataParallel(model)
+
     checkpoint = torch.load(args.checkpoint)
-    model.load_state_dict(checkpoint['state_dict'])
+    model.load_state_dict(checkpoint['net'])
 
     #############################################
     # Evaluate model
@@ -113,7 +111,7 @@ def main(args):
     #images = images / 2 + 0.5     # unnormalize
     #npimg = images.numpy()
     #print("npimg shape : ", npimg.shape)
-    torchvision.utils.save_image(images, "./input.png", nrow=4, normalize = True, range=(-1,1))
+    torchvision.utils.save_image(images, "./input.png", nrow=4, normalize=True, range=(-1, 1))
     print("input gt labels : ")
     np_labels = labels.detach().cpu()
     print([classes[int(np_labels[j])] for j in range(args.batch_size)])
@@ -128,8 +126,8 @@ def main(args):
     #############################################
     # Create CAM
     #############################################
-    cam = GradCAM(model=model, target_layers=cam_layers, use_cuda=False if args.cpu else True)
-    gb_model = GuidedBackpropReLUModel(model=model, use_cuda=False if args.cpu else True)
+    cam = GradCAM(model=model, target_layers=cam_layers, use_cuda=False if device == 'cpu' else True)
+    gb_model = GuidedBackpropReLUModel(model=model, use_cuda=False if device == 'cpu' else True)
 
     grayscale_cams = cam(input_tensor=images)
 
@@ -167,16 +165,11 @@ def main(args):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='PyTorch VGG Evaluation')
-    parser.add_argument('-a', '--arch', metavar='ARCH', default='vgg19',
-                        choices=model_names,
-                        help='model architecture: ' + ' | '.join(model_names) +
-                             ' (default: vgg19)')
+    parser = argparse.ArgumentParser(description='PyTorch ResNet Evaluation')
     parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                         help='number of data loading workers (default: 4)')
     parser.add_argument('-b', '--batch-size', default=4, type=int,
                         metavar='N', help='mini-batch size (default: 128)')
-    parser.add_argument('--cpu', dest='cpu', action='store_true', help='use cpu')
     parser.add_argument('--checkpoint', dest='checkpoint',
                         help='The directory used to save the trained models',
                         default='./save_temp/checkpoint_0.tar', type=str)

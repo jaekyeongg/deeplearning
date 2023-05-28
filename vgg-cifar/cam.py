@@ -5,25 +5,10 @@ import torch
 
 import vgg
 
-from torchvision import models
-from pytorch_grad_cam import GradCAM, \
-    HiResCAM, \
-    ScoreCAM, \
-    GradCAMPlusPlus, \
-    AblationCAM, \
-    XGradCAM, \
-    EigenCAM, \
-    EigenGradCAM, \
-    LayerCAM, \
-    FullGrad, \
-    GradCAMElementWise
-
-
+from pytorch_grad_cam import GradCAM, HiResCAM, ScoreCAM, GradCAMPlusPlus, AblationCAM, XGradCAM, EigenCAM, \
+    EigenGradCAM, LayerCAM, FullGrad, GradCAMElementWise
 from pytorch_grad_cam import GuidedBackpropReLUModel
-from pytorch_grad_cam.utils.image import show_cam_on_image, \
-    deprocess_image, \
-    preprocess_image
-from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
+from pytorch_grad_cam.utils.image import show_cam_on_image, deprocess_image, preprocess_image
 
 
 model_names = sorted(name for name in vgg.__dict__

@@ -182,7 +182,7 @@ def vgg11(num_classes, block_type=None):
 
 def vgg11_bn(num_classes, block_type=None):
     """VGG 11-layer model (configuration "VGG11") with batch normalization"""
-    return VGG(make_layers(cfg['A'], batch_norm=True), num_classes)
+    return VGG(make_layers(cfg['VGG11'], batch_norm=True), num_classes)
 
 
 def vgg13(num_classes, block_type=None):
