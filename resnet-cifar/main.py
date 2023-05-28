@@ -180,6 +180,13 @@ def main(args):
         'SA_12': ['SA', 'SA', 'None', 'None'],
         'SA_23': ['None', 'SA', 'SA', 'None'],
 
+        'AA_123': ['AA', 'AA', 'AA', 'None'],
+        'AA_1': ['AA', 'None', 'None', 'None'],
+        'AA_12': ['AA', 'AA', 'None', 'None'],
+        'AA_23': ['None', 'AA', 'AA', 'None'],
+
+
+
         'NEW_1': ['NEW', 'None', 'None', 'None'],
         'NEW_12': ['NEW', 'NEW', 'None', 'None'],
         'NEW_123': ['NEW', 'NEW', 'NEW', 'None'],
