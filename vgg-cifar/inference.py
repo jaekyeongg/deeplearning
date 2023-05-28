@@ -63,7 +63,7 @@ def main(args):
     # Load dataset
     #############################################
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    if args.dataset == "cifar100" :
+    if args.dataset == "cifar100":
         num_classes = 100
         classes = class_cifar100
         val_loader = torch.utils.data.DataLoader(
@@ -113,7 +113,7 @@ def main(args):
     #images = images / 2 + 0.5     # unnormalize
     #npimg = images.numpy()
     #print("npimg shape : ", npimg.shape)
-    torchvision.utils.save_image(images, "./input.png", nrow=4, normalize = True, range=(-1,1))
+    torchvision.utils.save_image(images, "./input.png", nrow=4, normalize=True, range=(-1, 1))
     print("input gt labels : ")
     np_labels = labels.detach().cpu()
     print([classes[int(np_labels[j])] for j in range(args.batch_size)])
