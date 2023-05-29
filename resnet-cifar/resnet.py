@@ -26,6 +26,10 @@ cfg = {
     'NEW_123': ['NEW', 'NEW', 'NEW', 'None'],
     'NEW_23': ['None', 'NEW', 'NEW', 'None'],
 
+    'NAB_1': ['NEW', 'None', 'None', 'None'],
+    'NAB_12': ['NEW', 'NEW', 'None', 'None'],
+    'NAB_123': ['NEW', 'NEW', 'NEW', 'None'],
+
     'SE_12': ['SE', 'SE', 'None', 'None'],
     'SE_23': ['None', 'SE', 'SE', 'None'],
     'SE_34': ['None', 'None', 'SE', 'SE'],
@@ -73,21 +77,32 @@ class BasicBlock(nn.Module):
             )
         
         self.image_module = None
-        if module == 'SE': self.image_module = SEBlock(self.expansion*planes, 8)
-        elif module == 'SEC': self.image_module = SEBlockCon(self.expansion * planes, 8)
-        elif module == 'CA': self.image_module = ChannelGate(self.expansion*planes)
-        elif module == 'SA': self.image_module = SpatialGate()
-        elif module == 'AA': self.image_module = AACN_Layer(self.expansion*planes, image_size=image_size)
-        elif module == 'NEW' : self.image_module = NewBlock(self.expansion*planes, 8)
-        elif module == 'SE_SA' : self.image_module = nn.Sequential(
-            SEBlock(self.expansion*planes, 8),
-            SpatialGate()
-        )
-        elif module == 'SEC_SA' : self.image_module = nn.Sequential(
-            SEBlockCon(self.expansion*planes, 8),
-            SpatialGate()
-        )
-        elif module == 'CBAM' : self.image_module = CBAM(self.expansion*planes, 16)
+        if module == 'SE':
+            self.image_module = SEBlock(self.expansion*planes, 8)
+        elif module == 'SEC':
+            self.image_module = SEBlockCon(self.expansion * planes, 8)
+        elif module == 'CA':
+            self.image_module = ChannelGate(self.expansion*planes)
+        elif module == 'SA':
+            self.image_module = SpatialGate()
+        elif module == 'AA':
+            self.image_module = AACN_Layer(self.expansion*planes, image_size=image_size)
+        elif module == 'NEW':
+            self.image_module = NewBlock(self.expansion*planes, 8)
+        elif module == 'NAB':
+            self.image_module = NewAttentionBlock(self.expansion * planes)
+        elif module == 'SE_SA':
+            self.image_module = nn.Sequential(
+                SEBlock(self.expansion*planes, 8),
+                SpatialGate()
+            )
+        elif module == 'SEC_SA':
+            self.image_module = nn.Sequential(
+                SEBlockCon(self.expansion*planes, 8),
+                SpatialGate()
+            )
+        elif module == 'CBAM':
+            self.image_module = CBAM(self.expansion*planes, 16)
 
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
@@ -136,6 +151,8 @@ class Bottleneck(nn.Module):
             self.image_module = AACN_Layer(self.expansion*planes, image_size=image_size)
         elif module == 'NEW':
             self.image_module = NewBlock(self.expansion * planes, 8)
+        elif module == 'NAB':
+            self.image_module = NewAttentionBlock(self.expansion * planes)
         elif module == 'SE_SA':
             self.image_module = nn.Sequential(
                 SEBlock(self.expansion * planes, 8),

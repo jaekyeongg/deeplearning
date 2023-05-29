@@ -72,16 +72,17 @@ def make_layers(cfg, batch_norm=True):
             layers += [AACN_Layer(in_channels=in_channels, image_size=img_size)]
         elif v == 'CBAM':
             layers += [CBAM(in_channels,16)]
-        elif v == 'NEW' :
+        elif v == 'NEW':
             reduction=8
             layers += [NewBlock(in_channels, reduction)]
+        elif v == 'NAB':
+            layers += [NewAttentionBlock(in_channels)]
         else:
             conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1)
             if batch_norm:
                 layers += [conv2d, nn.BatchNorm2d(v), nn.ReLU(inplace=True)]
             else:
                 layers += [conv2d, nn.ReLU(inplace=True)]
-            in_channels = v
             in_channels = v
     return nn.Sequential(*layers)
 
@@ -113,7 +114,7 @@ cfg = {
     'AA_123': [64, 64, 'AA', 'M', 128, 128, 'AA', 'M', 256, 256, 256, 256, 'AA', 'M', 512, 512, 512, 512, 'M',
             512, 512, 512, 512, 'M'],
     
-    # channel Attention Module
+    # Channel Attention Module
     'CA_123': [64, 64, 'CA', 'M', 128, 128, 'CA', 'M', 256, 256, 256, 256, 'CA', 'M', 512, 512, 512, 512, 'M',
              512, 512, 512, 512, 'M'],
     'CA_234': [64, 64, 'M', 128, 128, 'CA', 'M', 256, 256, 256, 256, 'CA', 'M', 512, 512, 512, 512, 'CA', 'M',
@@ -172,6 +173,13 @@ cfg = {
     'CBAM_123': [64, 64, 'CBAM', 'M', 128, 128, 'CBAM', 'M', 256, 256, 256, 256, 'CBAM', 'M', 512, 512, 512, 512, 'M',
                 512, 512, 512, 512, 'M'],
 
+    # Our new model 2
+    'NAB_1': [64, 64, 'NAB', 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M',
+             512, 512, 512, 512, 'M'],
+    'NAB_12': [64, 64, 'NAB', 'M', 128, 128, 'NAB', 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M',
+             512, 512, 512, 512, 'M'],
+    'NAB_123': [64, 64, 'NAB', 'M', 128, 128, 'NAB', 'M', 256, 256, 256, 256, 'NAB', 'M', 512, 512, 512, 512, 'M',
+             512, 512, 512, 512, 'M'],
 }
 
 

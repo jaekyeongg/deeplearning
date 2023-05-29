@@ -147,6 +147,7 @@ def logsumexp_2d(tensor):
     outputs = s + (tensor_flatten - s).exp().sum(dim=2, keepdim=True).log()
     return outputs
 
+
 class AACN_Layer(nn.Module):
     def __init__(self, in_channels, k=0.25, v=0.25, kernel_size=3, num_heads=8, image_size=32, inference=False):
         super(AACN_Layer, self).__init__()
@@ -308,4 +309,39 @@ class NewBlock(nn.Module):
         scale = x * y.expand_as(x)
         res = x + scale
         return res
-    
+
+
+class NewAttentionBlock(nn.Module):
+    def __init__(self, channel):
+        super(NewAttentionBlock, self).__init__()
+
+        # Create spatial attention module
+        # Apply 1x1 conv ==> create the single feature channel
+        self.sam = nn.Sequential(
+            nn.Conv2d(in_channels=channel, out_channels=1, kernel_size=1, stride=1, groups=1, bias=True),
+            # nn.ReLU(inplace=True)
+            nn.Sigmoid()
+        )
+
+        # Create channel attention module
+        kernel_size = 7
+        self.cam = nn.Sequential(
+            nn.Conv2d(in_channels=channel, out_channels=channel, kernel_size=kernel_size, stride=(kernel_size - 1) // 2,
+                      groups=1, bias=True),
+            # nn.ReLU(inplace=True),
+            nn.Sigmoid()
+        )
+
+        self.max_pool = nn.AdaptiveMaxPool2d(1)
+
+    def forward(self, x):
+        # Apply spatial attention
+        scale_sam = self.sam(x)
+
+        # Apply channel attention
+        b, c, _, _ = x.size()
+        cam = self.cam(x)
+        cam = self.max_pool(cam).view(b, c, 1, 1)
+        scale_cam = cam.expand_as(x)
+
+        return x * scale_sam * scale_cam

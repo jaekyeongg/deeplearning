@@ -45,7 +45,7 @@ def get_args():
     parser.add_argument(
         '--eigen_smooth',
         action='store_true',
-        help='Reduce noise by taking the first principle componenet'
+        help='Reduce noise by taking the first principle component'
         'of cam_weights*activations')
 
     args = parser.parse_args()
