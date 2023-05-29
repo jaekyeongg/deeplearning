@@ -71,7 +71,7 @@ def main(args):
                 transforms.ToTensor(),
                 normalize,
             ])),
-            batch_size=args.batch_size, shuffle=False,
+            batch_size=args.batch_size, shuffle=True,
             num_workers=args.workers, pin_memory=True)
     else:  # default dataset is CIFAR10
         num_classes = 10
@@ -81,7 +81,7 @@ def main(args):
                 transforms.ToTensor(),
                 normalize,
             ])),
-            batch_size=args.batch_size, shuffle=False,
+            batch_size=args.batch_size, shuffle=True,
             num_workers=args.workers, pin_memory=True)
 
     print("dataset : ", args.dataset)
@@ -113,7 +113,7 @@ def main(args):
     #images = images / 2 + 0.5     # unnormalize
     #npimg = images.numpy()
     #print("npimg shape : ", npimg.shape)
-    torchvision.utils.save_image(images, "./input.png", nrow=4, normalize=True, range=(-1, 1))
+    torchvision.utils.save_image(images, "gradCAM_seed%d_input.jpg" % seed, nrow=4, normalize=True, range=(-1, 1))
     print("input gt labels : ")
     np_labels = labels.detach().cpu()
     print([classes[int(np_labels[j])] for j in range(args.batch_size)])
@@ -161,9 +161,9 @@ def main(args):
             final_gb = cv2.hconcat([final_gb, gb])
             final_cam_gb = cv2.hconcat([final_cam_gb, cam_gb])
 
-    cv2.imwrite('gradCAM_cam.jpg', final_cam)
-    cv2.imwrite('gradCAM_gb.jpg', final_gb)
-    cv2.imwrite('gradCAM_cam_gb.jpg', final_cam_gb)
+    cv2.imwrite('gradCAM_seed%d_%s_cam.jpg' % (seed, args.block), final_cam)
+    cv2.imwrite('gradCAM_seed%d_gb.jpg' % seed, final_gb)
+    cv2.imwrite('gradCAM_seed%d_%s_cam_gb.jpg' % (seed, args.block), final_cam_gb)
 
 
 if __name__ == '__main__':

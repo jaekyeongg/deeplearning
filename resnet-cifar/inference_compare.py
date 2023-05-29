@@ -21,7 +21,7 @@ import numpy as np
 import random
 
 #################### Random Seed 고정 ####################
-seed = 1  # 43
+seed = 26  # 43
 random.seed(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
@@ -84,84 +84,89 @@ def main(args):
 
     print("dataset : ", args.dataset)
     print("num classes : ", num_classes)
-    print("args.checkpoint : ", args.checkpoint)
 
-    #############################################
-    # Load model
-    #############################################
-    model = ResNet18(block=args.block, num_classes=100 if args.dataset == 'cifar100' else 10)
-    # print(model.layer4)
-
-    cam_layers = [model.layer4]
-
-    model = model.to(device)
-    if device == 'cuda':
-        model = torch.nn.DataParallel(model)
-
-    checkpoint = torch.load(args.checkpoint)
-    model.load_state_dict(checkpoint['net'])
-
-    #############################################
-    # Evaluate model
-    #############################################
     dataiter = iter(val_loader)
     images, labels = next(dataiter)
     print("images shape : ", images.shape)
-    #img = torchvision.utils.make_grid(images)
-    #images = images / 2 + 0.5     # unnormalize
-    #npimg = images.numpy()
-    #print("npimg shape : ", npimg.shape)
+    # img = torchvision.utils.make_grid(images)
+    # images = images / 2 + 0.5     # unnormalize
+    # npimg = images.numpy()
+    # print("npimg shape : ", npimg.shape)
     torchvision.utils.save_image(images, "gradCAM_seed%d_input.jpg" % seed, nrow=4, normalize=True, range=(-1, 1))
     print("input gt labels : ")
     np_labels = labels.detach().cpu()
     print([classes[int(np_labels[j])] for j in range(args.batch_size)])
-    output = model(images)
-    maxk = 1
-    pred = output.topk(maxk, 1, True, True)
-    # print("pred : ", pred)
-    print("pred labels : ")
-    np_indices = pred.indices.detach().cpu()
-    print([classes[int(np_indices[j][0])] for j in range(args.batch_size)])
 
-    #############################################
-    # Create CAM
-    #############################################
-    cam = GradCAM(model=model, target_layers=cam_layers, use_cuda=False if device == 'cpu' else True)
-    gb_model = GuidedBackpropReLUModel(model=model, use_cuda=False if device == 'cpu' else True)
+    blocks = ['NEW_1', 'RESNET']
+    checkpoints = ['save_temp/NEW_1/checkpoint_192.pth', 'save_temp/RESNET/checkpoint_50.pth']
+    for block, checkpoint in zip(blocks, checkpoints):
+        print("Model: %s" % block)
+        print("Checkpoint: %s" % checkpoint)
+        #############################################
+        # Load model
+        #############################################
+        model = ResNet18(block=block, num_classes=100 if args.dataset == 'cifar100' else 10)
+        # print(model.layer4)
 
-    grayscale_cams = cam(input_tensor=images)
+        cam_layers = [model.layer4]
 
-    final_cam = None
-    final_gb = None
-    final_cam_gb = None
-    for idx, grayscale_cam in enumerate(grayscale_cams):
-        tensor_img = images[idx]
+        model = model.to(device)
+        if device == 'cuda':
+            model = torch.nn.DataParallel(model)
 
-        rgb_img = deprocess_image(tensor_img.permute(1, 2, 0).numpy()) / 255.0
-        # print(rgb_img)
-        cam_image = show_cam_on_image(rgb_img, grayscale_cam, use_rgb=True)
+        checkpoint = torch.load(checkpoint)
+        model.load_state_dict(checkpoint['net'])
 
-        # cam_image is RGB encoded whereas "cv2.imwrite" requires BGR encoding.
-        cam_image = cv2.cvtColor(cam_image, cv2.COLOR_RGB2BGR)
+        #############################################
+        # Evaluate model
+        #############################################
+        output = model(images)
+        maxk = 1
+        pred = output.topk(maxk, 1, True, True)
+        # print("pred : ", pred)
+        print("pred labels : ")
+        np_indices = pred.indices.detach().cpu()
+        print([classes[int(np_indices[j][0])] for j in range(args.batch_size)])
 
-        gb = gb_model(tensor_img[None, :], target_category=None)
+        #############################################
+        # Create CAM
+        #############################################
+        cam = GradCAM(model=model, target_layers=cam_layers, use_cuda=False if device == 'cpu' else True)
+        gb_model = GuidedBackpropReLUModel(model=model, use_cuda=False if device == 'cpu' else True)
 
-        cam_mask = cv2.merge([grayscale_cam, grayscale_cam, grayscale_cam])
-        cam_gb = deprocess_image(cam_mask * gb)
-        gb = deprocess_image(gb)
+        grayscale_cams = cam(input_tensor=images)
 
-        if final_cam is None:
-            final_cam = cam_image
-            final_gb = gb
-            final_cam_gb = cam_gb
-        else:
-            final_cam = cv2.hconcat([final_cam, cam_image])
-            final_gb = cv2.hconcat([final_gb, gb])
-            final_cam_gb = cv2.hconcat([final_cam_gb, cam_gb])
+        final_cam = None
+        final_gb = None
+        final_cam_gb = None
+        for idx, grayscale_cam in enumerate(grayscale_cams):
+            tensor_img = images[idx]
 
-    cv2.imwrite('gradCAM_seed%d_%s_cam.jpg' % (seed, args.block), final_cam)
-    cv2.imwrite('gradCAM_seed%d_gb.jpg' % seed, final_gb)
-    cv2.imwrite('gradCAM_seed%d_%s_cam_gb.jpg' % (seed, args.block), final_cam_gb)
+            rgb_img = deprocess_image(tensor_img.permute(1, 2, 0).numpy()) / 255.0
+            # print(rgb_img)
+            cam_image = show_cam_on_image(rgb_img, grayscale_cam, use_rgb=True, image_weight=0.6)
+
+            # cam_image is RGB encoded whereas "cv2.imwrite" requires BGR encoding.
+            cam_image = cv2.cvtColor(cam_image, cv2.COLOR_RGB2BGR)
+
+            gb = gb_model(tensor_img[None, :], target_category=None)
+
+            cam_mask = cv2.merge([grayscale_cam, grayscale_cam, grayscale_cam])
+            cam_gb = deprocess_image(cam_mask * gb)
+            gb = deprocess_image(gb)
+
+            if final_cam is None:
+                final_cam = cam_image
+                final_gb = gb
+                final_cam_gb = cam_gb
+            else:
+                final_cam = cv2.hconcat([final_cam, cam_image])
+                final_gb = cv2.hconcat([final_gb, gb])
+                final_cam_gb = cv2.hconcat([final_cam_gb, cam_gb])
+
+        cv2.imwrite('gradCAM_seed%d_%s_cam.jpg' % (seed, block), final_cam)
+        cv2.imwrite('gradCAM_seed%d_gb.jpg' % seed, final_gb)
+        cv2.imwrite('gradCAM_seed%d_%s_cam_gb.jpg' % (seed, block), final_cam_gb)
 
 
 if __name__ == '__main__':
@@ -170,10 +175,6 @@ if __name__ == '__main__':
                         help='number of data loading workers (default: 4)')
     parser.add_argument('-b', '--batch-size', default=4, type=int,
                         metavar='N', help='mini-batch size (default: 128)')
-    parser.add_argument('--checkpoint', dest='checkpoint',
-                        help='The directory used to save the trained models',
-                        default='./save_temp/checkpoint_0.tar', type=str)
-    parser.add_argument('--dataset', help='choose one of dataset : cifar10 or cifar100', default='cifar10', type=str)
-    parser.add_argument('--block', help='block_type', default='VGG19', type=str)
+    parser.add_argument('--dataset', help='choose one of dataset : cifar10 or cifar100', default='cifar100', type=str)
 
     main(parser.parse_args())
