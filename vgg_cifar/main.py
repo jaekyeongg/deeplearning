@@ -180,6 +180,8 @@ def train(train_loader, model, criterion, optimizer, epoch, is_cpu, is_half, pri
     # switch to train mode
     model.train()
 
+    if print_freq < 0:
+        print_freq = len(train_loader) - 1
     end = time.time()
     for i, (input, target) in enumerate(train_loader):
 
@@ -237,6 +239,8 @@ def validate(val_loader, model, criterion, is_cpu, is_half, print_freq):
     # switch to evaluate mode
     model.eval()
 
+    if print_freq < 0:
+        print_freq = len(val_loader) - 1
     end = time.time()
     for i, (input, target) in enumerate(val_loader):
         if is_cpu == False:
