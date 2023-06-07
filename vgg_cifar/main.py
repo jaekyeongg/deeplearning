@@ -16,6 +16,7 @@ import numpy as np
 import random
 
 import wandb
+
 #################### Random Seed 고정 ####################
 seed = 42
 random.seed(seed)
@@ -26,55 +27,8 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 ##########################################################
 
-model_names = sorted(name for name in vgg.__dict__
-    if name.islower() and not name.startswith("__")
-                     and name.startswith("vgg")
-                     and callable(vgg.__dict__[name]))
 
-
-parser = argparse.ArgumentParser(description='PyTorch VGG Trainer')
-parser.add_argument('-a', '--arch', metavar='ARCH', default='vgg19_bn',
-                    choices=model_names,
-                    help='model architecture: ' + ' | '.join(model_names) +
-                    ' (default: vgg19)')
-parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
-                    help='number of data loading workers (default: 4)')
-parser.add_argument('--epochs', default=300, type=int, metavar='N',
-                    help='number of total epochs to run')
-parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
-                    help='manual epoch number (useful on restarts)')
-parser.add_argument('-b', '--batch-size', default=128, type=int,
-                    metavar='N', help='mini-batch size (default: 128)')
-parser.add_argument('--lr', '--learning-rate', default=0.05, type=float,
-                    metavar='LR', help='initial learning rate')
-parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
-                    help='momentum')
-parser.add_argument('--weight-decay', '--wd', default=5e-4, type=float,
-                    metavar='W', help='weight decay (default: 5e-4)')
-parser.add_argument('--print-freq', '-p', default=20, type=int,
-                    metavar='N', help='print frequency (default: 20)')
-parser.add_argument('--resume', default='', type=str, metavar='PATH',
-                    help='path to latest checkpoint (default: none)')
-parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
-                    help='evaluate model on validation set')
-parser.add_argument('--pretrained', dest='pretrained', action='store_true',
-                    help='use pre-trained model')
-parser.add_argument('--half', dest='half', action='store_true',
-                    help='use half-precision(16-bit) ')
-parser.add_argument('--cpu', dest='cpu', action='store_true',
-                    help='use cpu')
-parser.add_argument('--save-dir', dest='save_dir',
-                    help='The directory used to save the trained models',
-                    default='save_temp', type=str)
-parser.add_argument('--dataset', help='choose one of dataset : cifar10 or cifar100', default='cifar10', type=str)
-parser.add_argument('--block', help='block_type', default='E', type=str)
-
-best_prec1 = 0
-
-
-def main():
-    global args, best_prec1
-    args = parser.parse_args()
+def main(args):
     if args.dataset == "cifar10" :
         num_classes = 10
     elif args.dataset == "cifar100" :
@@ -148,7 +102,7 @@ def main():
         ])),
         batch_size=args.batch_size, shuffle=False,
         num_workers=args.workers, pin_memory=True)
-    
+
 
     # define loss function (criterion) and pptimizer
     criterion = nn.CrossEntropyLoss()
@@ -167,7 +121,7 @@ def main():
     if args.dataset == "cifar10" :
         wandb.init(
             project='VGG_CIFAR10',
-            entity="miv_yubin", 
+            entity="miv_yubin",
             config={
                 'archi': args.arch,
                 'learning_rate': args.lr,
@@ -179,7 +133,7 @@ def main():
     elif args.dataset == "cifar100" :
         wandb.init(
             project='VGG_CIFAR100',
-            entity="miv_yubin", 
+            entity="miv_yubin",
             config={
                 'archi': args.arch,
                 'learning_rate': args.lr,
@@ -191,17 +145,18 @@ def main():
     wandb.run.name = args.block
 
     if args.evaluate:
-        validate(val_loader, model, criterion)
+        validate(val_loader, model, criterion, args.cpu, args.half, args.print_freq)
         return
 
+    best_prec1 = 0
     for epoch in range(args.start_epoch, args.epochs):
-        adjust_learning_rate(optimizer, epoch)
+        adjust_learning_rate(args.lr, optimizer, epoch)
 
         # train for one epoch
-        train(train_loader, model, criterion, optimizer, epoch)
+        train(train_loader, model, criterion, optimizer, epoch, args.cpu, args.half, args.print_freq)
 
         # evaluate on validation set
-        prec1 = validate(val_loader, model, criterion)
+        prec1 = validate(val_loader, model, criterion, args.cpu, args.half, args.print_freq)
 
         # remember best prec@1 and save checkpoint
         is_best = prec1 > best_prec1
@@ -213,7 +168,7 @@ def main():
         }, is_best, filename=os.path.join(save_path, 'checkpoint_{}.tar'.format(epoch)))
 
 
-def train(train_loader, model, criterion, optimizer, epoch):
+def train(train_loader, model, criterion, optimizer, epoch, is_cpu, is_half, print_freq):
     """
         Run one train epoch
     """
@@ -231,10 +186,10 @@ def train(train_loader, model, criterion, optimizer, epoch):
         # measure data loading time
         data_time.update(time.time() - end)
 
-        if args.cpu == False:
+        if is_cpu == False:
             input = input.cuda(non_blocking=True)
             target = target.cuda(non_blocking=True)
-        if args.half:
+        if is_half:
             input = input.half()
 
         # compute output
@@ -257,9 +212,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
         batch_time.update(time.time() - end)
         end = time.time()
 
-        
-
-        if i % args.print_freq == 0:
+        if i % print_freq == 0:
             print('Epoch: [{0}][{1}/{2}]\t'
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
@@ -273,7 +226,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
         })
 
 
-def validate(val_loader, model, criterion):
+def validate(val_loader, model, criterion, is_cpu, is_half, print_freq):
     """
     Run evaluation
     """
@@ -286,11 +239,11 @@ def validate(val_loader, model, criterion):
 
     end = time.time()
     for i, (input, target) in enumerate(val_loader):
-        if args.cpu == False:
+        if is_cpu == False:
             input = input.cuda(non_blocking=True)
             target = target.cuda(non_blocking=True)
 
-        if args.half:
+        if is_half:
             input = input.half()
 
         # compute output
@@ -310,9 +263,7 @@ def validate(val_loader, model, criterion):
         batch_time.update(time.time() - end)
         end = time.time()
 
-        
-
-        if i % args.print_freq == 0:
+        if i % print_freq == 0:
             print('Test: [{0}/{1}]\t'
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
@@ -355,11 +306,11 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 
-def adjust_learning_rate(optimizer, epoch):
+def adjust_learning_rate(lr, optimizer, epoch):
     """Sets the learning rate to the initial LR decayed by 2 every 30 epochs"""
-    lr = args.lr * (0.5 ** (epoch // 30))
+    new_lr = lr * (0.5 ** (epoch // 30))
     for param_group in optimizer.param_groups:
-        param_group['lr'] = lr
+        param_group['lr'] = new_lr
 
 
 def accuracy(output, target, topk=(1,)):
@@ -379,4 +330,48 @@ def accuracy(output, target, topk=(1,)):
 
 
 if __name__ == '__main__':
-    main()
+    model_names = sorted(name for name in vgg.__dict__
+                         if name.islower() and not name.startswith("__")
+                         and name.startswith("vgg")
+                         and callable(vgg.__dict__[name]))
+
+    parser = argparse.ArgumentParser(description='PyTorch VGG Trainer')
+    parser.add_argument('--arch', metavar='ARCH', default='vgg19_bn',
+                        choices=model_names,
+                        help='model architecture: ' + ' | '.join(model_names) +
+                             ' (default: vgg19)')
+    parser.add_argument('--workers', default=4, type=int, metavar='N',
+                        help='number of data loading workers (default: 4)')
+    parser.add_argument('--epochs', default=300, type=int, metavar='N',
+                        help='number of total epochs to run')
+    parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
+                        help='manual epoch number (useful on restarts)')
+    parser.add_argument('--batch-size', default=128, type=int,
+                        metavar='N', help='mini-batch size (default: 128)')
+    parser.add_argument('--lr', default=0.05, type=float,
+                        metavar='LR', help='initial learning rate')
+    parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
+                        help='momentum')
+    parser.add_argument('--weight-decay', default=5e-4, type=float,
+                        metavar='W', help='weight decay (default: 5e-4)')
+    parser.add_argument('--print-freq', default=20, type=int,
+                        metavar='N', help='print frequency (default: 20)')
+    parser.add_argument('--resume', default='', type=str, metavar='PATH',
+                        help='path to latest checkpoint (default: none)')
+    parser.add_argument('--evaluate', dest='evaluate', action='store_true',
+                        help='evaluate model on validation set')
+    parser.add_argument('--pretrained', dest='pretrained', action='store_true',
+                        help='use pre-trained model')
+    parser.add_argument('--half', dest='half', action='store_true',
+                        help='use half-precision(16-bit) ')
+    parser.add_argument('--cpu', dest='cpu', action='store_true',
+                        help='use cpu')
+    parser.add_argument('--save-dir', dest='save_dir',
+                        help='The directory used to save the trained models',
+                        default='save_temp', type=str)
+    parser.add_argument('--dataset', help='choose one of dataset : cifar10 or cifar100', default='cifar10', type=str)
+    parser.add_argument('--block', help='block_type', default='VGG19', type=str)
+
+    args = parser.parse_args()
+
+    main(args)
