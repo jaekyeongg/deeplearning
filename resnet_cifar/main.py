@@ -1,24 +1,17 @@
 '''Train CIFAR10 with PyTorch.'''
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-import torch.backends.cudnn as cudnn
-
-import torchvision
-import torchvision.transforms as transforms
-
-import os
 import argparse
-
-from models import *
-from resnet import *
-from utils import progress_bar
-
+import os
 import numpy as np
 import random
 
+import torch.optim as optim
+import torch.backends.cudnn as cudnn
+import torchvision.transforms as transforms
+import torchvision.datasets as datasets
+
 import wandb
+
+from resnet import *
 
 #################### Random Seed 고정 ####################
 seed = 42
@@ -30,11 +23,9 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 ##########################################################
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
 
 # Training
-def train(epoch, trainloader, net, criterion, optimizer):
+def train(epoch, trainloader, net, criterion, optimizer, device):
     print('\nEpoch: %d' % epoch)
     net.train()
     train_loss = 0
@@ -56,8 +47,8 @@ def train(epoch, trainloader, net, criterion, optimizer):
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
 
-        progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                     % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
+    print(' - Train : Loss: %.3f | Acc: %.3f%% (=%d/%d)'
+          % (train_loss / (batch_idx + 1), 100. * correct / total, correct, total))
 
     wandb.log({
         'train_acc': 100.*correct/total,
@@ -65,7 +56,7 @@ def train(epoch, trainloader, net, criterion, optimizer):
     })
 
 
-def test(epoch, testloader, net, criterion, best_acc):
+def test(epoch, testloader, net, criterion, best_acc, device):
     net.eval()
     test_loss = 0
     correct = 0
@@ -81,8 +72,9 @@ def test(epoch, testloader, net, criterion, best_acc):
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
 
-            progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                         % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
+    print(' - Test : Loss: %.3f | Acc: %.3f%% (=%d/%d)'
+          % (test_loss / (batch_idx + 1), 100. * correct / total, correct, total))
+
     wandb.log({
         'test_acc': 100.*correct/total,
         'test_loss': test_loss/(batch_idx+1)
@@ -96,7 +88,7 @@ def test(epoch, testloader, net, criterion, best_acc):
             'acc': acc,
             'epoch': epoch,
         }
-        save_path = os.path.join(args.save_dir, args.block)
+        save_path = os.path.join(args.save_dir, args.dataset, args.block)
         if not os.path.exists(save_path):
             os.makedirs(save_path)
         torch.save(state, os.path.join(save_path, 'checkpoint_{}.pth'.format(epoch)))
@@ -106,6 +98,9 @@ def test(epoch, testloader, net, criterion, best_acc):
 
 
 def main(args):
+    print("dataset :", args.dataset)
+    print("weight folder :", args.save_dir)
+
     best_acc = 0  # best test accuracy
     start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
@@ -127,15 +122,15 @@ def main(args):
     #            'dog', 'frog', 'horse', 'ship', 'truck')
 
     if args.dataset == 'cifar10':
-        trainset = torchvision.datasets.CIFAR10(
+        trainset = datasets.CIFAR10(
             root='./data', train=True, download=True, transform=transform_train)
         trainloader = torch.utils.data.DataLoader(
-            trainset, batch_size=128, shuffle=True, num_workers=2)
+            trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.workers)
 
-        testset = torchvision.datasets.CIFAR10(
-            root='./data', train=False, download=True, transform=transform_test)
+        testset = datasets.CIFAR10(
+            root='./data', train=False, download=False, transform=transform_test)
         testloader = torch.utils.data.DataLoader(
-            testset, batch_size=100, shuffle=False, num_workers=2)
+            testset, batch_size=args.batch_size, shuffle=False, num_workers=args.workers)
 
         wandb.init(
             project='ResNet_CIFAR10',
@@ -150,15 +145,15 @@ def main(args):
         )
         wandb.run.name = args.block
     else:
-        trainset = torchvision.datasets.CIFAR100(
+        trainset = datasets.CIFAR100(
             root='./data', train=True, download=True, transform=transform_train)
         trainloader = torch.utils.data.DataLoader(
-            trainset, batch_size=128, shuffle=True, num_workers=2)
+            trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.workers)
 
-        testset = torchvision.datasets.CIFAR100(
-            root='./data', train=False, download=True, transform=transform_test)
+        testset = datasets.CIFAR100(
+            root='./data', train=False, download=False, transform=transform_test)
         testloader = torch.utils.data.DataLoader(
-            testset, batch_size=100, shuffle=False, num_workers=2)
+            testset, batch_size=args.batch_size, shuffle=False, num_workers=args.workers)
 
         wandb.init(
             project='ResNet_CIFAR100',
@@ -173,26 +168,13 @@ def main(args):
         )
         wandb.run.name = args.block
 
+    device = 'cuda' if torch.cuda.is_available() and not args.cpu else 'cpu'
+
     # Model
     print('==> Building model..')
     net = ResNet18(block=args.block, num_classes=100 if args.dataset == 'cifar100' else 10)
 
-    # net = VGG('VGG19')
-    # net = PreActResNet18()
-    # net = GoogLeNet()
-    # net = DenseNet121()
-    # net = ResNeXt29_2x64d()
-    # net = MobileNet()
-    # net = MobileNetV2()
-    # net = DPN92()
-    # net = ShuffleNetG2()
-    # net = SENet18()
-    # net = ShuffleNetV2(1)
-    # net = EfficientNetB0()
-    # net = RegNetX_200MF()
-    # net = SimpleDLA()
-
-    print("model : ", net)
+    # print("model : ", net)
     net = net.to(device)
     if device == 'cuda':
         net = torch.nn.DataParallel(net)
@@ -200,12 +182,14 @@ def main(args):
 
     if args.resume:
         # Load checkpoint.
-        print('==> Resuming from checkpoint..')
-        assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
-        checkpoint = torch.load('./checkpoint/ckpt.pth')
-        net.load_state_dict(checkpoint['net'])
-        best_acc = checkpoint['acc']
-        start_epoch = checkpoint['epoch']
+        if os.path.isfile(args.resume):
+            print("=> loading checkpoint '{}'".format(args.resume))
+            checkpoint = torch.load(args.resume)
+            net.load_state_dict(checkpoint['net'])
+            best_acc = checkpoint['acc']
+            start_epoch = checkpoint['epoch']
+        else:
+            print("=> no checkpoint found at '{}'".format(args.resume))
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=args.lr,
@@ -213,21 +197,25 @@ def main(args):
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
 
     for idx in range(start_epoch, start_epoch+args.epochs):
-        train(idx, trainloader, net, criterion, optimizer)
-        best_acc = test(idx, testloader, net, criterion, best_acc)
+        train(idx, trainloader, net, criterion, optimizer, device)
+        best_acc = test(idx, testloader, net, criterion, best_acc, device)
         scheduler.step()
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='PyTorch ResNet Training')
+    parser.add_argument('--workers', default=4, type=int, metavar='N',
+                        help='number of data loading workers (default: 4)')
+    parser.add_argument('--epochs', default=200, type=int, metavar='N', help='number of total epochs to run')
+    parser.add_argument('--batch-size', default=128, type=int, metavar='N', help='mini-batch size (default: 128)')
     parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
-    parser.add_argument('--resume', '-r', action='store_true',
-                        help='resume from checkpoint')
-    parser.add_argument('--epochs', default=200, type=int, metavar='N',
-                        help='number of total epochs to run')
-    parser.add_argument('--dataset', help='dataset', default='cifar100', type=str)
+    parser.add_argument('--resume', default='', type=str, metavar='PATH',
+                        help='path to latest checkpoint (default: none)')
+    parser.add_argument('--cpu', dest='cpu', action='store_true', help='use cpu')
+    parser.add_argument('--save-dir', dest='save_dir', help='The directory used to save the trained models',
+                        default='weights', type=str)
+    parser.add_argument('--dataset', help='choose one of dataset : cifar10 or cifar100', default='cifar100', type=str)
     parser.add_argument('--block', help='block type', default='RESNET', type=str)
-    parser.add_argument('--save_dir', default='save_temp', type=str)
 
     args = parser.parse_args()
 

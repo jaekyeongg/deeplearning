@@ -1,5 +1,7 @@
 import argparse
 import os
+import numpy as np
+import random
 import time
 
 import torch
@@ -10,12 +12,10 @@ import torch.optim
 import torch.utils.data
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
-import vgg
-
-import numpy as np
-import random
 
 import wandb
+
+import vgg
 
 #################### Random Seed 고정 ####################
 seed = 42
@@ -33,8 +33,8 @@ def main(args):
         num_classes = 10
     elif args.dataset == "cifar100" :
         num_classes = 100
-    print("dataset : ", args.dataset)
-    print("num classes : ", num_classes)
+    print("dataset :", args.dataset)
+    print("weight folder :", args.save_dir)
 
     # Check the save_dir exists or not
     save_path = os.path.join(args.save_dir, args.dataset, args.block)
@@ -161,11 +161,12 @@ def main(args):
         # remember best prec@1 and save checkpoint
         is_best = prec1 > best_prec1
         best_prec1 = max(prec1, best_prec1)
-        save_checkpoint({
-            'epoch': epoch + 1,
-            'state_dict': model.state_dict(),
-            'best_prec1': best_prec1,
-        }, is_best, filename=os.path.join(save_path, 'checkpoint_{}.tar'.format(epoch)))
+        if is_best:
+            save_checkpoint({
+                'epoch': epoch + 1,
+                'state_dict': model.state_dict(),
+                'best_prec1': best_prec1,
+            }, is_best, filename=os.path.join(save_path, 'checkpoint_{}.tar'.format(epoch)))
 
 
 def train(train_loader, model, criterion, optimizer, epoch, is_cpu, is_half, print_freq):
@@ -340,39 +341,26 @@ if __name__ == '__main__':
                          and callable(vgg.__dict__[name]))
 
     parser = argparse.ArgumentParser(description='PyTorch VGG Trainer')
-    parser.add_argument('--arch', metavar='ARCH', default='vgg19_bn',
-                        choices=model_names,
-                        help='model architecture: ' + ' | '.join(model_names) +
-                             ' (default: vgg19)')
+    parser.add_argument('--arch', metavar='ARCH', default='vgg19_bn', choices=model_names,
+                        help='model architecture: ' + ' | '.join(model_names) + ' (default: vgg19)')
     parser.add_argument('--workers', default=4, type=int, metavar='N',
                         help='number of data loading workers (default: 4)')
-    parser.add_argument('--epochs', default=300, type=int, metavar='N',
-                        help='number of total epochs to run')
+    parser.add_argument('--epochs', default=300, type=int, metavar='N', help='number of total epochs to run')
     parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                         help='manual epoch number (useful on restarts)')
-    parser.add_argument('--batch-size', default=128, type=int,
-                        metavar='N', help='mini-batch size (default: 128)')
-    parser.add_argument('--lr', default=0.05, type=float,
-                        metavar='LR', help='initial learning rate')
-    parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
-                        help='momentum')
-    parser.add_argument('--weight-decay', default=5e-4, type=float,
-                        metavar='W', help='weight decay (default: 5e-4)')
-    parser.add_argument('--print-freq', default=20, type=int,
-                        metavar='N', help='print frequency (default: 20)')
+    parser.add_argument('--batch-size', default=128, type=int, metavar='N', help='mini-batch size (default: 128)')
+    parser.add_argument('--lr', default=0.05, type=float, metavar='LR', help='initial learning rate')
+    parser.add_argument('--momentum', default=0.9, type=float, metavar='M', help='momentum')
+    parser.add_argument('--weight-decay', default=5e-4, type=float, metavar='W', help='weight decay (default: 5e-4)')
+    parser.add_argument('--print-freq', default=20, type=int, metavar='N', help='print frequency (default: 20)')
     parser.add_argument('--resume', default='', type=str, metavar='PATH',
                         help='path to latest checkpoint (default: none)')
-    parser.add_argument('--evaluate', dest='evaluate', action='store_true',
-                        help='evaluate model on validation set')
-    parser.add_argument('--pretrained', dest='pretrained', action='store_true',
-                        help='use pre-trained model')
-    parser.add_argument('--half', dest='half', action='store_true',
-                        help='use half-precision(16-bit) ')
-    parser.add_argument('--cpu', dest='cpu', action='store_true',
-                        help='use cpu')
-    parser.add_argument('--save-dir', dest='save_dir',
-                        help='The directory used to save the trained models',
-                        default='save_temp', type=str)
+    parser.add_argument('--evaluate', dest='evaluate', action='store_true', help='evaluate model on validation set')
+    parser.add_argument('--pretrained', dest='pretrained', action='store_true', help='use pre-trained model')
+    parser.add_argument('--half', dest='half', action='store_true', help='use half-precision(16-bit) ')
+    parser.add_argument('--cpu', dest='cpu', action='store_true', help='use cpu')
+    parser.add_argument('--save-dir', dest='save_dir', help='The directory used to save the trained models',
+                        default='weights', type=str)
     parser.add_argument('--dataset', help='choose one of dataset : cifar10 or cifar100', default='cifar10', type=str)
     parser.add_argument('--block', help='block_type', default='VGG19', type=str)
 

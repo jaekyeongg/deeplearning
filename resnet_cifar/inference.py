@@ -1,6 +1,8 @@
 import argparse
 import cv2
-import torch
+import numpy as np
+import random
+
 import torch.nn.parallel
 import torch.backends.cudnn as cudnn
 import torch.optim
@@ -9,19 +11,14 @@ import torchvision
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 
-from models import *
+from pytorch_grad_cam import GradCAM
+from pytorch_grad_cam import GuidedBackpropReLUModel
+from pytorch_grad_cam.utils.image import show_cam_on_image, deprocess_image
+
 from resnet import *
 
-from pytorch_grad_cam import GradCAM, HiResCAM, ScoreCAM, GradCAMPlusPlus, AblationCAM, XGradCAM, EigenCAM, \
-    EigenGradCAM, LayerCAM, FullGrad, GradCAMElementWise
-from pytorch_grad_cam import GuidedBackpropReLUModel
-from pytorch_grad_cam.utils.image import show_cam_on_image, deprocess_image, preprocess_image
-
-import numpy as np
-import random
-
 #################### Random Seed 고정 ####################
-seed = 1  # 43
+seed = 42
 random.seed(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
@@ -29,8 +26,6 @@ torch.cuda.manual_seed_all(seed)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 ##########################################################
-
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 # Label and its index for CIFAR10
 # https://www.cs.toronto.edu/~kriz/cifar.html
@@ -82,17 +77,18 @@ def main(args):
             batch_size=args.batch_size, shuffle=True,
             num_workers=args.workers, pin_memory=True)
 
-    print("dataset : ", args.dataset)
-    print("num classes : ", num_classes)
-    print("args.checkpoint : ", args.checkpoint)
+    print("dataset :", args.dataset)
+    print("checkpoint :", args.checkpoint)
 
     #############################################
     # Load model
     #############################################
-    model = ResNet18(block=args.block, num_classes=100 if args.dataset == 'cifar100' else 10)
+    model = ResNet18(block=args.block, num_classes=num_classes)
     # print(model.layer4)
 
     cam_layers = [model.layer4]
+
+    device = 'cuda' if torch.cuda.is_available() and not args.cpu else 'cpu'
 
     model = model.to(device)
     if device == 'cuda':
@@ -170,10 +166,11 @@ if __name__ == '__main__':
                         help='number of data loading workers (default: 4)')
     parser.add_argument('-b', '--batch-size', default=4, type=int,
                         metavar='N', help='mini-batch size (default: 128)')
+    parser.add_argument('--cpu', dest='cpu', action='store_true', help='use cpu')
+    parser.add_argument('--dataset', help='choose one of dataset : cifar10 or cifar100', default='cifar10', type=str)
     parser.add_argument('--checkpoint', dest='checkpoint',
                         help='The directory used to save the trained models',
-                        default='./save_temp/checkpoint_0.tar', type=str)
-    parser.add_argument('--dataset', help='choose one of dataset : cifar10 or cifar100', default='cifar10', type=str)
+                        default='', type=str)
     parser.add_argument('--block', help='block_type', default='VGG19', type=str)
 
     main(parser.parse_args())

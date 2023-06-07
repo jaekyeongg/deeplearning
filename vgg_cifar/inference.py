@@ -1,5 +1,8 @@
 import argparse
 import cv2
+import numpy as np
+import random
+
 import torch
 import torch.nn.parallel
 import torch.backends.cudnn as cudnn
@@ -9,15 +12,11 @@ import torchvision
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 
-import vgg
-
-from pytorch_grad_cam import GradCAM, HiResCAM, ScoreCAM, GradCAMPlusPlus, AblationCAM, XGradCAM, EigenCAM, \
-    EigenGradCAM, LayerCAM, FullGrad, GradCAMElementWise
+from pytorch_grad_cam import GradCAM
 from pytorch_grad_cam import GuidedBackpropReLUModel
-from pytorch_grad_cam.utils.image import show_cam_on_image, deprocess_image, preprocess_image
+from pytorch_grad_cam.utils.image import show_cam_on_image, deprocess_image
 
-import numpy as np
-import random
+import vgg
 
 #################### Random Seed 고정 ####################
 seed = 42
@@ -84,9 +83,8 @@ def main(args):
             batch_size=args.batch_size, shuffle=True,
             num_workers=args.workers, pin_memory=True)
 
-    print("dataset : ", args.dataset)
-    print("num classes : ", num_classes)
-    print("args.checkpoint : ", args.checkpoint)
+    print("dataset :", args.dataset)
+    print("checkpoint :", args.checkpoint)
 
     #############################################
     # Load model
@@ -177,10 +175,10 @@ if __name__ == '__main__':
     parser.add_argument('-b', '--batch-size', default=4, type=int,
                         metavar='N', help='mini-batch size (default: 128)')
     parser.add_argument('--cpu', dest='cpu', action='store_true', help='use cpu')
+    parser.add_argument('--dataset', help='choose one of dataset : cifar10 or cifar100', default='cifar10', type=str)
     parser.add_argument('--checkpoint', dest='checkpoint',
                         help='The directory used to save the trained models',
                         default='./save_temp/checkpoint_0.tar', type=str)
-    parser.add_argument('--dataset', help='choose one of dataset : cifar10 or cifar100', default='cifar10', type=str)
     parser.add_argument('--block', help='block_type', default='VGG19', type=str)
 
     main(parser.parse_args())

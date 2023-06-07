@@ -1,6 +1,8 @@
 import argparse
 import cv2
-import torch
+import numpy as np
+import random
+
 import torch.nn.parallel
 import torch.backends.cudnn as cudnn
 import torch.optim
@@ -9,19 +11,14 @@ import torchvision
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 
-from models import *
+from pytorch_grad_cam import GradCAM
+from pytorch_grad_cam import GuidedBackpropReLUModel
+from pytorch_grad_cam.utils.image import show_cam_on_image, deprocess_image
+
 from resnet import *
 
-from pytorch_grad_cam import GradCAM, HiResCAM, ScoreCAM, GradCAMPlusPlus, AblationCAM, XGradCAM, EigenCAM, \
-    EigenGradCAM, LayerCAM, FullGrad, GradCAMElementWise
-from pytorch_grad_cam import GuidedBackpropReLUModel
-from pytorch_grad_cam.utils.image import show_cam_on_image, deprocess_image, preprocess_image
-
-import numpy as np
-import random
-
 #################### Random Seed 고정 ####################
-seed = 26  # 43
+seed = 42
 random.seed(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
@@ -29,8 +26,6 @@ torch.cuda.manual_seed_all(seed)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 ##########################################################
-
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 # Label and its index for CIFAR10
 # https://www.cs.toronto.edu/~kriz/cifar.html
@@ -82,8 +77,8 @@ def main(args):
             batch_size=args.batch_size, shuffle=True,
             num_workers=args.workers, pin_memory=True)
 
-    print("dataset : ", args.dataset)
-    print("num classes : ", num_classes)
+    print("dataset :", args.dataset)
+    print("checkpoint :", args.checkpoint)
 
     dataiter = iter(val_loader)
     images, labels = next(dataiter)
@@ -97,9 +92,7 @@ def main(args):
     np_labels = labels.detach().cpu()
     print([classes[int(np_labels[j])] for j in range(args.batch_size)])
 
-    blocks = ['NEW_1', 'RESNET']
-    checkpoints = ['save_temp/NEW_1/checkpoint_192.pth', 'save_temp/RESNET/checkpoint_50.pth']
-    for block, checkpoint in zip(blocks, checkpoints):
+    for block, checkpoint in zip(args.blocks, args.checkpoints):
         print("Model: %s" % block)
         print("Checkpoint: %s" % checkpoint)
         #############################################
@@ -109,6 +102,8 @@ def main(args):
         # print(model.layer4)
 
         cam_layers = [model.layer4]
+
+        device = 'cuda' if torch.cuda.is_available() and not args.cpu else 'cpu'
 
         model = model.to(device)
         if device == 'cuda':
@@ -175,6 +170,11 @@ if __name__ == '__main__':
                         help='number of data loading workers (default: 4)')
     parser.add_argument('-b', '--batch-size', default=4, type=int,
                         metavar='N', help='mini-batch size (default: 128)')
+    parser.add_argument('--cpu', dest='cpu', action='store_true', help='use cpu')
     parser.add_argument('--dataset', help='choose one of dataset : cifar10 or cifar100', default='cifar100', type=str)
+    parser.add_argument('--checkpoints', dest='checkpoints',
+                        help='multiple directories used to save the trained models',
+                        nargs='+', default=[], type=str)
+    parser.add_argument('--blocks', help='multiple block_type to be compared', nargs='+', default=[], type=str)
 
     main(parser.parse_args())
