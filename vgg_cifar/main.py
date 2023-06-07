@@ -220,7 +220,7 @@ def train(train_loader, model, criterion, optimizer, epoch, is_cpu, is_half, pri
                   'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                   'Prec@1 {top1.val:.3f} ({top1.avg:.3f})'.format(
-                      epoch, i, len(train_loader), batch_time=batch_time,
+                      epoch, i, len(train_loader) - 1, batch_time=batch_time,
                       data_time=data_time, loss=losses, top1=top1))
     wandb.log({
             'train_prec1': top1.avg,
@@ -272,7 +272,7 @@ def validate(val_loader, model, criterion, is_cpu, is_half, print_freq):
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                   'Prec@1 {top1.val:.3f} ({top1.avg:.3f})'.format(
-                      i, len(val_loader), batch_time=batch_time, loss=losses,
+                      i, len(val_loader) - 1, batch_time=batch_time, loss=losses,
                       top1=top1))
 
     print(' * Prec@1 {top1.avg:.3f}'
