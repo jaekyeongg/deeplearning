@@ -44,6 +44,10 @@ and analyze the inference results.
 |    CBAM     | Combine  | linear combination of CA and SA               |
 |     NEW     | Combine  | __our model__                                 |
 
+### CA
+
+![CA](https://github.com/jaekyeongg/deeplearning/blob/main/fig/CAM.png)
+
 ## How to check the performance of attention blocks
 
 Please, read __'demo.pdf'__ file
