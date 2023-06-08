@@ -1,32 +1,36 @@
-# VGG Model for Testing Image Model Blocks  
+# VGG Model for Testing Attention Blocks  
 This is the PyTorch implementation of VGG network trained on CIFAR10 or CIFAR100 dataset
 
-### Requirements. 
-[PyTorch] (https://pytorch.org/)
-
-[wandb] (https://wandb.ai/site)
-
-### Training 
+## Training 
 	# CIFAR10
-	CUDA_VISIBLE_DEVICES=1 python main.py --dataset cifar10  --block [block_type]
+	python main.py --dataset cifar10  --block [block type]
     # CIFAR100
-	CUDA_VISIBLE_DEVICES=2 python main.py --dataset cifar100 --block [block_type]
+	python main.py --dataset cifar100 --block [block type]
 
-#### block_type = "block_name"_"target layer"
- - SA_123 = Spaital Attention module is applied to layer 1, 2, and 3.
- 
-#### block name
- - SA : Spatial attention module
- - SE : Squeeze-and-Excitation block + Residual block
- - SEC : Squeeze-and-Excitation block with 1x1 conv.
- - AA : Attention Augmented Convolutional Networks
- - SE_SA : linear pair of SE and SA
- - SEC_SA : linear pair of SEC and SA
- - CBAM : linear pair of channel attention and spatial attention
- - NEW : our model
+### How to set 'block' argument
+It consist of block name and layer position to be added.
 
-### Evaluation 	
-	# CUDA version
-	python main.py --resume=[trained weights file (.tar)] -e
-	# CPU version	
-	python main.py --resume=[trained weights file (.tar)] -e --cpu
+    [block type] = [block name]_[layer position]
+
+Ex) SA_123 = Spaital Attention module is applied to layer 1, 2, and 3.
+
+##### List of block_type
+
+| Block name | Layer position |
+|:----------:|:---------------|
+|   VGG19   | -              |
+|     CA     | 123, 234, 345  |
+|     SA     | 1, 12, 23, 123 |
+|     SE     | 123, 234, 345  |
+|    SEC     | 12, 123, 234, 345 |
+|     AA     | 1, 12, 123, 23 |
+|   SE_SA    | 1, 12, 123     |
+|   SEC_SA   | 1, 12, 123     |
+|    CBAM    | 1, 12, 123     |
+|    NEW     | 1, 12, 123     |
+
+
+### Inference
+	python inference.py --batch-size [# of images to be tested] --checkpoint [weight file] --dataset [cifar10 or cifar100] --block [block type]
+
+It should be the same 'dataset' and 'block' as when training the weight file (checkpoint).

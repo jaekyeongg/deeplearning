@@ -10,49 +10,61 @@ sys.path.append('..')
 from block import *
 
 cfg = {
+    # Base model
     'RESNET': ['None', 'None', 'None', 'None'],
-    'SA_123': ['SA', 'SA', 'SA', 'None'],
-    'SA_1': ['SA', 'None', 'None', 'None'],
-    'SA_12': ['SA', 'SA', 'None', 'None'],
-    'SA_23': ['None', 'SA', 'SA', 'None'],
 
-    'AA_123': ['AA', 'AA', 'AA', 'None'],
-    'AA_1': ['AA', 'None', 'None', 'None'],
-    'AA_12': ['AA', 'AA', 'None', 'None'],
-    'AA_23': ['None', 'AA', 'AA', 'None'],
-
-    'NEW_1': ['NEW', 'None', 'None', 'None'],
-    'NEW_12': ['NEW', 'NEW', 'None', 'None'],
-    'NEW_123': ['NEW', 'NEW', 'NEW', 'None'],
-    'NEW_23': ['None', 'NEW', 'NEW', 'None'],
-
-    'NAB_1': ['NEW', 'None', 'None', 'None'],
-    'NAB_12': ['NEW', 'NEW', 'None', 'None'],
-    'NAB_123': ['NEW', 'NEW', 'NEW', 'None'],
-
-    'SE_12': ['SE', 'SE', 'None', 'None'],
-    'SE_23': ['None', 'SE', 'SE', 'None'],
-    'SE_34': ['None', 'None', 'SE', 'SE'],
-
+    # Channel Attention Module
     'CA_12': ['CA', 'CA', 'None', 'None'],
     'CA_23': ['None', 'CA', 'CA', 'None'],
     'CA_34': ['None', 'None', 'CA', 'CA'],
 
+    # Spatial Attention Module
+    'SA_1': ['SA', 'None', 'None', 'None'],
+    'SA_12': ['SA', 'SA', 'None', 'None'],
+    'SA_123': ['SA', 'SA', 'SA', 'None'],
+    'SA_23': ['None', 'SA', 'SA', 'None'],
+
+    # Squeeze-and-Excitation Block with residual net
+    'SE_12': ['SE', 'SE', 'None', 'None'],
+    'SE_23': ['None', 'SE', 'SE', 'None'],
+    'SE_34': ['None', 'None', 'SE', 'SE'],
+
+    # Squeeze-and-Excitation Block with 1x1 conv.
     'SEC_12': ['SEC', 'SEC', 'None', 'None'],
     'SEC_23': ['None', 'SEC', 'SEC', 'None'],
     'SEC_34': ['None', 'None', 'SEC', 'SEC'],
 
+    # Attention Augmented Convolutional Network
+    'AA_1': ['AA', 'None', 'None', 'None'],
+    'AA_12': ['AA', 'AA', 'None', 'None'],
+    'AA_123': ['AA', 'AA', 'AA', 'None'],
+    'AA_23': ['None', 'AA', 'AA', 'None'],
+
+    # SE+SA
     'SE_SA_1': ['SE_SA', 'None', 'None', 'None'],
     'SE_SA_12': ['SE_SA', 'SE_SA', 'None', 'None'],
     'SE_SA_123': ['SE_SA', 'SE_SA', 'SE_SA', 'None'],
 
+    # SEC+SA
     'SEC_SA_1': ['SEC_SA', 'None', 'None', 'None'],
     'SEC_SA_12': ['SEC_SA', 'SEC_SA', 'None', 'None'],
     'SEC_SA_123': ['SEC_SA', 'SEC_SA', 'SEC_SA', 'None'],
 
+    # CBAM
     'CBAM_1': ['CBAM', 'None', 'None', 'None'],
     'CBAM_12': ['CBAM', 'CBAM', 'None', 'None'],
     'CBAM_123': ['CBAM', 'CBAM', 'CBAM', 'None'],
+
+    # Our new model
+    'NEW_1': ['NEW', 'None', 'None', 'None'],
+    'NEW_12': ['NEW', 'NEW', 'None', 'None'],
+    'NEW_23': ['None', 'NEW', 'NEW', 'None'],
+    'NEW_123': ['NEW', 'NEW', 'NEW', 'None'],
+
+    # Our new model 2
+    'NAB_1': ['NEW', 'None', 'None', 'None'],
+    'NAB_12': ['NEW', 'NEW', 'None', 'None'],
+    'NAB_123': ['NEW', 'NEW', 'NEW', 'None'],
 }
 
 

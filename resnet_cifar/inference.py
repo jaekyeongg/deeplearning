@@ -102,22 +102,26 @@ def main(args):
     #############################################
     dataiter = iter(val_loader)
     images, labels = next(dataiter)
-    print("images shape : ", images.shape)
-    #img = torchvision.utils.make_grid(images)
-    #images = images / 2 + 0.5     # unnormalize
-    #npimg = images.numpy()
-    #print("npimg shape : ", npimg.shape)
+    print("Number of images : ", images.shape[0])
+
+    # img = torchvision.utils.make_grid(images)
+    # images = images / 2 + 0.5     # unnormalize
+    # npimg = images.numpy()
+    # print("npimg shape : ", npimg.shape)
+
     torchvision.utils.save_image(images, "gradCAM_seed%d_input.jpg" % seed, nrow=4, normalize=True, range=(-1, 1))
-    print("input gt labels : ")
+
     np_labels = labels.detach().cpu()
-    print([classes[int(np_labels[j])] for j in range(args.batch_size)])
     output = model(images)
     maxk = 1
     pred = output.topk(maxk, 1, True, True)
-    # print("pred : ", pred)
-    print("pred labels : ")
     np_indices = pred.indices.detach().cpu()
-    print([classes[int(np_indices[j][0])] for j in range(args.batch_size)])
+
+    print("\nResults")
+    print(" - Ground truth : " + str([classes[int(np_labels[j])] for j in range(args.batch_size)]))
+    print(" - Inference    : " + str([classes[int(np_indices[j][0])] for j in range(args.batch_size)]))
+    correct_answers = sum(1 if int(np_labels[j]) == int(np_indices[j][0]) else 0 for j in range(args.batch_size))
+    print(" - Accuracy     : %3.1f%%" % (correct_answers / args.batch_size * 100))
 
     #############################################
     # Create CAM

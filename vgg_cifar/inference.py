@@ -12,10 +12,6 @@ import torchvision
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 
-from pytorch_grad_cam import GradCAM
-from pytorch_grad_cam import GuidedBackpropReLUModel
-from pytorch_grad_cam.utils.image import show_cam_on_image, deprocess_image
-
 import vgg
 
 #################### Random Seed 고정 ####################
@@ -91,8 +87,6 @@ def main(args):
     #############################################
     model = vgg.__dict__[args.arch](num_classes, args.block)
 
-    cam_layers = [model.features[52]]
-
     model.features = torch.nn.DataParallel(model.features)
     if args.cpu:
         model.cpu()
@@ -106,62 +100,25 @@ def main(args):
     #############################################
     dataiter = iter(val_loader)
     images, labels = next(dataiter)
-    print("images shape : ", images.shape)
-    #img = torchvision.utils.make_grid(images)
-    #images = images / 2 + 0.5     # unnormalize
-    #npimg = images.numpy()
-    #print("npimg shape : ", npimg.shape)
-    torchvision.utils.save_image(images, "gradCAM_seed%d_input.jpg" % seed, nrow=4, normalize=True, range=(-1, 1))
-    print("input gt labels : ")
+    print("Number of images : ", images.shape[0])
+
+    # img = torchvision.utils.make_grid(images)
+    # images = images / 2 + 0.5     # unnormalize
+    # npimg = images.numpy()
+    # print("npimg shape : ", npimg.shape)
+    # torchvision.utils.save_image(images, "gradCAM_seed%d_input.jpg" % seed, nrow=4, normalize=True, range=(-1, 1))
+
     np_labels = labels.detach().cpu()
-    print([classes[int(np_labels[j])] for j in range(args.batch_size)])
     output = model(images)
     maxk = 1
     pred = output.topk(maxk, 1, True, True)
-    # print("pred : ", pred)
-    print("pred labels : ")
     np_indices = pred.indices.detach().cpu()
-    print([classes[int(np_indices[j][0])] for j in range(args.batch_size)])
 
-    #############################################
-    # Create CAM
-    #############################################
-    cam = GradCAM(model=model, target_layers=cam_layers, use_cuda=False if args.cpu else True)
-    gb_model = GuidedBackpropReLUModel(model=model, use_cuda=False if args.cpu else True)
-
-    grayscale_cams = cam(input_tensor=images)
-
-    final_cam = None
-    final_gb = None
-    final_cam_gb = None
-    for idx, grayscale_cam in enumerate(grayscale_cams):
-        tensor_img = images[idx]
-
-        rgb_img = deprocess_image(tensor_img.permute(1, 2, 0).numpy()) / 255.0
-        # print(rgb_img)
-        cam_image = show_cam_on_image(rgb_img, grayscale_cam, use_rgb=True)
-
-        # cam_image is RGB encoded whereas "cv2.imwrite" requires BGR encoding.
-        cam_image = cv2.cvtColor(cam_image, cv2.COLOR_RGB2BGR)
-
-        gb = gb_model(tensor_img[None, :], target_category=None)
-
-        cam_mask = cv2.merge([grayscale_cam, grayscale_cam, grayscale_cam])
-        cam_gb = deprocess_image(cam_mask * gb)
-        gb = deprocess_image(gb)
-
-        if final_cam is None:
-            final_cam = cam_image
-            final_gb = gb
-            final_cam_gb = cam_gb
-        else:
-            final_cam = cv2.hconcat([final_cam, cam_image])
-            final_gb = cv2.hconcat([final_gb, gb])
-            final_cam_gb = cv2.hconcat([final_cam_gb, cam_gb])
-
-    cv2.imwrite('gradCAM_seed%d_%s_cam.jpg' % (seed, args.block), final_cam)
-    cv2.imwrite('gradCAM_seed%d_gb.jpg' % seed, final_gb)
-    cv2.imwrite('gradCAM_seed%d_%s_cam_gb.jpg' % (seed, args.block), final_cam_gb)
+    print("\nResults")
+    print(" - Ground truth : " + str([classes[int(np_labels[j])] for j in range(args.batch_size)]))
+    print(" - Inference    : " + str([classes[int(np_indices[j][0])] for j in range(args.batch_size)]))
+    correct_answers = sum(1 if int(np_labels[j]) == int(np_indices[j][0]) else 0 for j in range(args.batch_size))
+    print(" - Accuracy     : %3.1f%%" % (correct_answers / args.batch_size * 100))
 
 
 if __name__ == '__main__':

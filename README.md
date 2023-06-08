@@ -45,9 +45,27 @@ and analyze the inference results.
 |     NEW     | Combine  | __our model__                                 |
 
 ### CA
-
 ![CA](https://github.com/jaekyeongg/deeplearning/blob/main/fig/CAM.png)
 
-## How to check the performance of attention blocks
+### SEC
+![SEC](https://github.com/jaekyeongg/deeplearning/blob/main/fig/SEblock.png)
 
-Please, read __'demo.pdf'__ file
+### SA
+![SEC](https://github.com/jaekyeongg/deeplearning/blob/main/fig/SAM.png)
+
+### Combination of channel attention and spatial attention
+![SEC](https://github.com/jaekyeongg/deeplearning/blob/main/fig/our_block.png)
+
+## Performance
+Please, read __'demo.pdf'__ file or run 'demo_inference.ipynb' file.
+
+### Test Accuracy with Cifar100 in ResNet18
+![experiment](https://github.com/jaekyeongg/deeplearning/blob/main/fig/experiment.png)
+
+#### Comparison of CBAM and our model by using GradCAM
+![GradCam](https://github.com/jaekyeongg/deeplearning/blob/main/fig/GradCam.png)
+
+### Test Accuracy with Cifar10 in VGG19
+![experiment2](https://github.com/jaekyeongg/deeplearning/blob/main/fig/experiment2.png)
+
+
